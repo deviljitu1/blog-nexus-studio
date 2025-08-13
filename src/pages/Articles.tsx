@@ -5,19 +5,32 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import BlogCard from "@/components/blog/BlogCard";
-import { blogPosts, categories } from "@/data/blogPosts";
+import { useBlogPosts } from "@/hooks/useBlogPosts";
+
+const categories = [
+  { name: "Technology", count: 15, color: "bg-blue-500" },
+  { name: "CSS", count: 8, color: "bg-green-500" },
+  { name: "React", count: 12, color: "bg-purple-500" },
+  { name: "TypeScript", count: 6, color: "bg-orange-500" },
+  { name: "API", count: 4, color: "bg-red-500" },
+  { name: "Performance", count: 7, color: "bg-yellow-500" },
+  { name: "Design", count: 5, color: "bg-pink-500" },
+  { name: "Development", count: 10, color: "bg-indigo-500" },
+];
 
 const Articles = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  
+  const { publishedPosts, loading } = useBlogPosts();
 
   // Filter and sort posts
-  const filteredPosts = blogPosts
+  const filteredPosts = publishedPosts
     .filter(post => {
       const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
                            post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCategory = selectedCategory === "all" || post.category.toLowerCase() === selectedCategory;
       return matchesSearch && matchesCategory;
@@ -25,11 +38,11 @@ const Articles = () => {
     .sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime();
+          return new Date(b.publish_date).getTime() - new Date(a.publish_date).getTime();
         case "oldest":
-          return new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime();
+          return new Date(a.publish_date).getTime() - new Date(b.publish_date).getTime();
         case "popular":
-          return b.readTime.localeCompare(a.readTime);
+          return b.read_time - a.read_time;
         default:
           return 0;
       }
@@ -129,12 +142,17 @@ const Articles = () => {
         {/* Results Count */}
         <div className="flex justify-between items-center mb-8">
           <p className="text-muted-foreground">
-            Showing {filteredPosts.length} of {blogPosts.length} articles
+            {loading ? "Loading articles..." : `Showing ${filteredPosts.length} of ${publishedPosts.length} articles`}
           </p>
         </div>
 
         {/* Articles Grid/List */}
-        {filteredPosts.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading articles...</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <Search className="h-8 w-8 text-muted-foreground" />

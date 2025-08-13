@@ -5,11 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import BlogCard from "@/components/blog/BlogCard";
-import { featuredPosts, recentPosts, categories } from "@/data/blogPosts";
+import { useBlogPosts } from "@/hooks/useBlogPosts";
+
+const categories = [
+  { name: "Technology", count: 15, color: "bg-blue-500" },
+  { name: "CSS", count: 8, color: "bg-green-500" },
+  { name: "React", count: 12, color: "bg-purple-500" },
+  { name: "TypeScript", count: 6, color: "bg-orange-500" },
+  { name: "API", count: 4, color: "bg-red-500" },
+  { name: "Performance", count: 7, color: "bg-yellow-500" },
+  { name: "Design", count: 5, color: "bg-pink-500" },
+  { name: "Development", count: 10, color: "bg-indigo-500" },
+];
 import heroImage from "@/assets/hero-bg.jpg";
 
 const Home = () => {
   const [email, setEmail] = useState("");
+  const { publishedPosts, loading } = useBlogPosts();
+  
+  const featuredPosts = publishedPosts.slice(0, 3);
+  const recentPosts = publishedPosts.slice(3, 9);
 
   const stats = [
     { icon: BookOpen, label: "Articles", value: "150+" },
@@ -88,9 +103,16 @@ const Home = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredPosts.map((post) => (
-              <BlogCard key={post.id} post={post} variant="featured" />
-            ))}
+            {loading ? (
+              <div className="col-span-full text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading featured articles...</p>
+              </div>
+            ) : (
+              featuredPosts.map((post) => (
+                <BlogCard key={post.id} post={post} variant="featured" />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -115,9 +137,16 @@ const Home = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentPosts.map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
+            {loading ? (
+              <div className="col-span-full text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading latest articles...</p>
+              </div>
+            ) : (
+              recentPosts.map((post) => (
+                <BlogCard key={post.id} post={post} />
+              ))
+            )}
           </div>
         </div>
       </section>

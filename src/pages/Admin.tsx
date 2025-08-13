@@ -5,22 +5,55 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { blogPosts } from "@/data/blogPosts";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useBlogPosts } from "@/hooks/useBlogPosts";
+import PostForm from "@/components/admin/PostForm";
+import { Link } from "react-router-dom";
 
 const Admin = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showPostForm, setShowPostForm] = useState(false);
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  
+  const { posts, loading, createPost, updatePost, deletePost } = useBlogPosts();
 
-  // Note: This is frontend-only for demo. In production, you'd need Supabase for backend functionality
-  const showSupabaseMessage = () => {
-    alert("To enable full admin functionality including creating, editing, and deleting posts, you'll need to connect this project to Supabase using the native integration. Click the green Supabase button in the top right of the Lovable interface.");
+  const handleCreatePost = async (data: any) => {
+    await createPost(data);
+    setShowPostForm(false);
   };
 
+  const handleEditPost = async (data: any) => {
+    if (editingPost) {
+      await updatePost(editingPost.id, data);
+      setEditingPost(null);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (postToDelete) {
+      await deletePost(postToDelete);
+      setPostToDelete(null);
+    }
+  };
+
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || post.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const publishedCount = posts.filter(post => post.status === 'published').length;
+  const draftCount = posts.filter(post => post.status === 'draft').length;
+  
   const stats = [
-    { title: "Total Posts", value: "24", change: "+3 this week" },
-    { title: "Published", value: "18", change: "75% of total" },
-    { title: "Drafts", value: "6", change: "25% of total" },
-    { title: "Views", value: "12.5K", change: "+18% this month" },
+    { title: "Total Posts", value: posts.length.toString(), change: `${posts.length} total` },
+    { title: "Published", value: publishedCount.toString(), change: `${Math.round((publishedCount / posts.length) * 100) || 0}% of total` },
+    { title: "Drafts", value: draftCount.toString(), change: `${Math.round((draftCount / posts.length) * 100) || 0}% of total` },
+    { title: "Categories", value: new Set(posts.map(p => p.category)).size.toString(), change: "unique categories" },
   ];
 
   return (
@@ -34,35 +67,25 @@ const Admin = () => {
               Manage your blog posts and content
             </p>
           </div>
-          <Button onClick={showSupabaseMessage} className="mt-4 md:mt-0">
+          <Button onClick={() => setShowPostForm(true)} className="mt-4 md:mt-0">
             <Plus className="mr-2 h-4 w-4" />
             New Post
           </Button>
         </div>
 
-        {/* Supabase Integration Notice */}
-        <Card className="mb-8 border-blue-200 bg-blue-50">
+        {/* Success Notice */}
+        <Card className="mb-8 border-green-200 bg-green-50">
           <CardContent className="pt-6">
             <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                !
+              <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                ✓
               </div>
               <div>
-                <h3 className="font-semibold text-blue-900 mb-1">Enable Full Admin Functionality</h3>
-                <p className="text-blue-800 text-sm">
-                  This admin panel is currently in demo mode. To enable full functionality including creating, 
-                  editing, and deleting posts, connect your project to Supabase using our native integration.
+                <h3 className="font-semibold text-green-900 mb-1">Admin Panel Connected</h3>
+                <p className="text-green-800 text-sm">
+                  Your admin panel is now fully functional with Supabase! You can create, edit, and delete blog posts.
+                  All changes are saved to your database in real-time.
                 </p>
-                <div className="mt-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={showSupabaseMessage}
-                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                  >
-                    Learn More
-                  </Button>
-                </div>
               </div>
             </div>
           </CardContent>
@@ -118,49 +141,111 @@ const Admin = () => {
             <CardTitle>Blog Posts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {blogPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-start space-x-4 flex-1">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-16 h-16 rounded object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{post.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary">{post.category}</Badge>
-                        <Badge variant="outline">Published</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(post.publishDate).toLocaleDateString()}
-                        </span>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Loading posts...</p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No posts found matching your criteria.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-start space-x-4 flex-1">
+                      <img
+                        src={post.image || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop'}
+                        alt={post.title}
+                        className="w-16 h-16 rounded object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">{post.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {post.excerpt}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary">{post.category}</Badge>
+                          <Badge variant={post.status === 'published' ? 'default' : 'outline'}>
+                            {post.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(post.publish_date).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    
+                    <div className="flex items-center space-x-2 mt-4 md:mt-0">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to={`/blog/${post.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setEditingPost(post)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setPostToDelete(post.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2 mt-4 md:mt-0">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={showSupabaseMessage}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={showSupabaseMessage}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Create/Edit Post Dialog */}
+        <Dialog open={showPostForm || !!editingPost} onOpenChange={(open) => {
+          if (!open) {
+            setShowPostForm(false);
+            setEditingPost(null);
+          }
+        }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingPost ? 'Edit Post' : 'Create New Post'}</DialogTitle>
+            </DialogHeader>
+            <PostForm
+              post={editingPost}
+              onSubmit={editingPost ? handleEditPost : handleCreatePost}
+              onCancel={() => {
+                setShowPostForm(false);
+                setEditingPost(null);
+              }}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!postToDelete} onOpenChange={() => setPostToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the blog post.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeletePost}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

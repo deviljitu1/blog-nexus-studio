@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import BlogCard from "@/components/blog/BlogCard";
-import { blogPosts } from "@/data/blogPosts";
+import { useBlogPosts } from "@/hooks/useBlogPosts";
 
 const BlogPost = () => {
   const { id } = useParams();
-  const post = blogPosts.find(p => p.id === id);
+  const { getPostById, publishedPosts } = useBlogPosts();
+  const post = getPostById(id || '');
   
   if (!post) {
     return (
@@ -30,7 +31,7 @@ const BlogPost = () => {
   }
 
   // Get related posts (same category, excluding current post)
-  const relatedPosts = blogPosts
+  const relatedPosts = publishedPosts
     .filter(p => p.category === post.category && p.id !== post.id)
     .slice(0, 3);
 
@@ -50,11 +51,6 @@ const BlogPost = () => {
                 <Tag className="h-3 w-3 mr-1" />
                 {post.category}
               </Badge>
-              {post.featured && (
-                <Badge className="hero-gradient text-white border-0">
-                  Featured
-                </Badge>
-              )}
             </div>
             
             <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
@@ -67,17 +63,19 @@ const BlogPost = () => {
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center space-x-4">
-                <img
-                  src={post.authorAvatar}
-                  alt={post.author}
-                  className="w-12 h-12 rounded-full"
-                />
+                {post.author_avatar && (
+                  <img
+                    src={post.author_avatar}
+                    alt={post.author_name}
+                    className="w-12 h-12 rounded-full"
+                  />
+                )}
                 <div>
-                  <p className="font-semibold">{post.author}</p>
+                  <p className="font-semibold">{post.author_name}</p>
                   <div className="flex items-center text-sm text-muted-foreground space-x-4">
                     <span className="flex items-center">
                       <CalendarDays className="h-4 w-4 mr-1" />
-                      {new Date(post.publishDate).toLocaleDateString('en-US', {
+                      {new Date(post.publish_date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
@@ -85,7 +83,7 @@ const BlogPost = () => {
                     </span>
                     <span className="flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
-                      {post.readTime}
+                      {post.read_time} min read
                     </span>
                   </div>
                 </div>
@@ -113,7 +111,7 @@ const BlogPost = () => {
       {/* Featured Image */}
       <div className="relative h-64 md:h-96 overflow-hidden">
         <img
-          src={post.image}
+          src={post.image || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop'}
           alt={post.title}
           className="w-full h-full object-cover"
         />
@@ -126,10 +124,13 @@ const BlogPost = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
               {/* Main Content */}
               <div className="lg:col-span-3">
-                <div 
-                  className="prose-blog"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
-                />
+                <div className="prose-blog">
+                  {post.content ? (
+                    <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                  ) : (
+                    <p>No content available for this post.</p>
+                  )}
+                </div>
                 
                 {/* Tags */}
                 <div className="mt-12 pt-8 border-t">
@@ -148,19 +149,21 @@ const BlogPost = () => {
                 {/* Author Bio */}
                 <div className="mt-12 p-6 bg-muted/30 rounded-lg">
                   <div className="flex items-start space-x-4">
-                    <img
-                      src={post.authorAvatar}
-                      alt={post.author}
-                      className="w-16 h-16 rounded-full"
-                    />
+                    {post.author_avatar && (
+                      <img
+                        src={post.author_avatar}
+                        alt={post.author_name}
+                        className="w-16 h-16 rounded-full"
+                      />
+                    )}
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{post.author}</h3>
+                      <h3 className="font-semibold text-lg mb-2">{post.author_name}</h3>
                       <p className="text-muted-foreground mb-4">
                         Passionate writer and developer sharing insights about modern web development, 
                         design trends, and technology innovation. Follow for more great content.
                       </p>
                       <Button variant="outline" size="sm">
-                        Follow {post.author}
+                        Follow {post.author_name}
                       </Button>
                     </div>
                   </div>
