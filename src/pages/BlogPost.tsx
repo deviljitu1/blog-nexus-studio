@@ -1,0 +1,230 @@
+import { useParams, Link } from "react-router-dom";
+import { CalendarDays, Clock, User, Tag, ArrowLeft, Share, Bookmark, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import BlogCard from "@/components/blog/BlogCard";
+import { blogPosts } from "@/data/blogPosts";
+
+const BlogPost = () => {
+  const { id } = useParams();
+  const post = blogPosts.find(p => p.id === id);
+  
+  if (!post) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            The article you're looking for doesn't exist or has been moved.
+          </p>
+          <Link to="/articles">
+            <Button>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Articles
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Get related posts (same category, excluding current post)
+  const relatedPosts = blogPosts
+    .filter(p => p.category === post.category && p.id !== post.id)
+    .slice(0, 3);
+
+  return (
+    <article className="min-h-screen">
+      {/* Header */}
+      <div className="bg-muted/30 py-8">
+        <div className="container">
+          <Link to="/articles" className="inline-flex items-center text-muted-foreground hover:text-primary mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Articles
+          </Link>
+          
+          <div className="max-w-4xl">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge variant="secondary">
+                <Tag className="h-3 w-3 mr-1" />
+                {post.category}
+              </Badge>
+              {post.featured && (
+                <Badge className="hero-gradient text-white border-0">
+                  Featured
+                </Badge>
+              )}
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
+              {post.title}
+            </h1>
+            
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              {post.excerpt}
+            </p>
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center space-x-4">
+                <img
+                  src={post.authorAvatar}
+                  alt={post.author}
+                  className="w-12 h-12 rounded-full"
+                />
+                <div>
+                  <p className="font-semibold">{post.author}</p>
+                  <div className="flex items-center text-sm text-muted-foreground space-x-4">
+                    <span className="flex items-center">
+                      <CalendarDays className="h-4 w-4 mr-1" />
+                      {new Date(post.publishDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                    <span className="flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {post.readTime}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm">
+                  <Share className="h-4 w-4 mr-1" />
+                  Share
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Bookmark className="h-4 w-4 mr-1" />
+                  Save
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Heart className="h-4 w-4 mr-1" />
+                  Like
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Image */}
+      <div className="relative h-64 md:h-96 overflow-hidden">
+        <img
+          src={post.image}
+          alt={post.title}
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      {/* Content */}
+      <div className="py-12">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+              {/* Main Content */}
+              <div className="lg:col-span-3">
+                <div 
+                  className="prose-blog"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+                
+                {/* Tags */}
+                <div className="mt-12 pt-8 border-t">
+                  <h3 className="font-semibold mb-4">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag) => (
+                      <Link key={tag} to={`/tag/${tag.toLowerCase()}`}>
+                        <Badge variant="outline" className="hover:bg-primary hover:text-primary-foreground">
+                          {tag}
+                        </Badge>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Author Bio */}
+                <div className="mt-12 p-6 bg-muted/30 rounded-lg">
+                  <div className="flex items-start space-x-4">
+                    <img
+                      src={post.authorAvatar}
+                      alt={post.author}
+                      className="w-16 h-16 rounded-full"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">{post.author}</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Passionate writer and developer sharing insights about modern web development, 
+                        design trends, and technology innovation. Follow for more great content.
+                      </p>
+                      <Button variant="outline" size="sm">
+                        Follow {post.author}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-8 space-y-6">
+                  {/* Table of Contents */}
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <h3 className="font-semibold mb-3">Table of Contents</h3>
+                    <nav className="space-y-2 text-sm">
+                      <a href="#introduction" className="block text-muted-foreground hover:text-primary">
+                        Introduction
+                      </a>
+                      <a href="#main-content" className="block text-muted-foreground hover:text-primary">
+                        Main Content
+                      </a>
+                      <a href="#conclusion" className="block text-muted-foreground hover:text-primary">
+                        Conclusion
+                      </a>
+                    </nav>
+                  </div>
+                  
+                  {/* Share */}
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <h3 className="font-semibold mb-3">Share this article</h3>
+                    <div className="flex flex-col space-y-2">
+                      <Button variant="outline" size="sm" className="justify-start">
+                        Share on Twitter
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start">
+                        Share on LinkedIn
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start">
+                        Copy Link
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Related Articles */}
+      {relatedPosts.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="container">
+            <h2 className="text-3xl font-serif font-bold mb-8 text-center">
+              Related Articles
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {relatedPosts.map((relatedPost) => (
+                <BlogCard key={relatedPost.id} post={relatedPost} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </article>
+  );
+};
+
+export default BlogPost;
