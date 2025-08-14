@@ -16,7 +16,7 @@ const BlogCard = ({ post, variant = "default" }: BlogCardProps) => {
 
   if (isCompact) {
     return (
-      <Link to={`/blog/${post.id}`} className="group">
+      <Link to={`/article/${post.id}`} className="group">
         <article className="flex space-x-4 p-4 rounded-lg hover:bg-accent/50 transition-colors">
           <img
             src={post.image || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=200&h=200&fit=crop'}
@@ -44,7 +44,7 @@ const BlogCard = ({ post, variant = "default" }: BlogCardProps) => {
   }
 
   return (
-    <Link to={`/blog/${post.id}`} className="group">
+    <Link to={`/article/${post.id}`} className="group">
       <Card className={`overflow-hidden shadow-card hover:shadow-elegant transition-all duration-300 group-hover:-translate-y-1 ${
         isFeature ? "h-full" : ""
       }`}>
