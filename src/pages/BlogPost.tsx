@@ -5,10 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import BlogCard from "@/components/blog/BlogCard";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const BlogPost = () => {
   const { id } = useParams();
   const { getPostById, publishedPosts } = useBlogPosts();
+  const { toast } = useToast();
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const post = getPostById(id || '');
   
   if (!post) {
@@ -34,6 +39,105 @@ const BlogPost = () => {
   const relatedPosts = publishedPosts
     .filter(p => p.category === post.category && p.id !== post.id)
     .slice(0, 3);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt || 'Check out this article',
+          url: url
+        });
+      } catch (err) {
+        console.log('Share canceled');
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link copied!",
+          description: "The article link has been copied to your clipboard.",
+        });
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to copy link to clipboard.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleSave = () => {
+    setIsSaved(!isSaved);
+    const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+    
+    if (!isSaved) {
+      savedPosts.push(post.id);
+      localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
+      toast({
+        title: "Article saved!",
+        description: "You can find it in your saved articles.",
+      });
+    } else {
+      const updatedSaved = savedPosts.filter((savedId: string) => savedId !== post.id);
+      localStorage.setItem('savedPosts', JSON.stringify(updatedSaved));
+      toast({
+        title: "Article removed",
+        description: "Article removed from your saved list.",
+      });
+    }
+  };
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+    
+    if (!isLiked) {
+      likedPosts.push(post.id);
+      localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+      toast({
+        title: "Article liked!",
+        description: "Thanks for the feedback!",
+      });
+    } else {
+      const updatedLiked = likedPosts.filter((likedId: string) => likedId !== post.id);
+      localStorage.setItem('likedPosts', JSON.stringify(updatedLiked));
+      toast({
+        title: "Like removed",
+        description: "Article removed from your liked list.",
+      });
+    }
+  };
+
+  const handleShareTwitter = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Check out this article: ${post.title}`);
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+  };
+
+  const handleShareLinkedIn = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied!",
+        description: "The article link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <article className="min-h-screen">
@@ -90,17 +194,27 @@ const BlogPost = () => {
               </div>
               
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleShare}>
                   <Share className="h-4 w-4 mr-1" />
                   Share
                 </Button>
-                <Button variant="outline" size="sm">
-                  <Bookmark className="h-4 w-4 mr-1" />
-                  Save
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSave}
+                  className={isSaved ? "bg-primary text-primary-foreground" : ""}
+                >
+                  <Bookmark className={`h-4 w-4 mr-1 ${isSaved ? "fill-current" : ""}`} />
+                  {isSaved ? "Saved" : "Save"}
                 </Button>
-                <Button variant="outline" size="sm">
-                  <Heart className="h-4 w-4 mr-1" />
-                  Like
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleLike}
+                  className={isLiked ? "bg-red-500 text-white hover:bg-red-600" : ""}
+                >
+                  <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
+                  {isLiked ? "Liked" : "Like"}
                 </Button>
               </div>
             </div>
@@ -193,13 +307,13 @@ const BlogPost = () => {
                   <div className="p-4 bg-muted/30 rounded-lg">
                     <h3 className="font-semibold mb-3">Share this article</h3>
                     <div className="flex flex-col space-y-2">
-                      <Button variant="outline" size="sm" className="justify-start">
+                      <Button variant="outline" size="sm" className="justify-start" onClick={handleShareTwitter}>
                         Share on Twitter
                       </Button>
-                      <Button variant="outline" size="sm" className="justify-start">
+                      <Button variant="outline" size="sm" className="justify-start" onClick={handleShareLinkedIn}>
                         Share on LinkedIn
                       </Button>
-                      <Button variant="outline" size="sm" className="justify-start">
+                      <Button variant="outline" size="sm" className="justify-start" onClick={handleCopyLink}>
                         Copy Link
                       </Button>
                     </div>
