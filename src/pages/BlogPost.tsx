@@ -6,15 +6,24 @@ import { Separator } from "@/components/ui/separator";
 import BlogCard from "@/components/blog/BlogCard";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePostInteractions } from "@/hooks/usePostInteractions";
 
 const BlogPost = () => {
   const { id } = useParams();
   const { getPostById, publishedPosts } = useBlogPosts();
   const { toast } = useToast();
+  const { toggleLike, toggleSave, checkIfLiked, checkIfSaved, getLikeCount } = usePostInteractions();
+  
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  
   const post = getPostById(id || '');
+  
+  // Mock user ID for demo - in real app, get from auth
+  const userId = "demo-user-123";
   
   if (!post) {
     return (
@@ -39,6 +48,32 @@ const BlogPost = () => {
   const relatedPosts = publishedPosts
     .filter(p => p.category === post.category && p.id !== post.id)
     .slice(0, 3);
+
+  // Load interaction states on component mount
+  useEffect(() => {
+    if (post && userId) {
+      const loadInteractionStates = async () => {
+        setLoading(true);
+        try {
+          const [liked, saved, count] = await Promise.all([
+            checkIfLiked(post.id, userId),
+            checkIfSaved(post.id, userId),
+            getLikeCount(post.id)
+          ]);
+          
+          setIsLiked(liked);
+          setIsSaved(saved);
+          setLikeCount(count);
+        } catch (error) {
+          console.error('Error loading interaction states:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadInteractionStates();
+    }
+  }, [post?.id, userId]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -70,46 +105,19 @@ const BlogPost = () => {
     }
   };
 
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+  const handleSave = async () => {
+    if (!post) return;
     
-    if (!isSaved) {
-      savedPosts.push(post.id);
-      localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
-      toast({
-        title: "Article saved!",
-        description: "You can find it in your saved articles.",
-      });
-    } else {
-      const updatedSaved = savedPosts.filter((savedId: string) => savedId !== post.id);
-      localStorage.setItem('savedPosts', JSON.stringify(updatedSaved));
-      toast({
-        title: "Article removed",
-        description: "Article removed from your saved list.",
-      });
-    }
+    const newSavedState = await toggleSave(post.id, userId);
+    setIsSaved(newSavedState);
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+  const handleLike = async () => {
+    if (!post) return;
     
-    if (!isLiked) {
-      likedPosts.push(post.id);
-      localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
-      toast({
-        title: "Article liked!",
-        description: "Thanks for the feedback!",
-      });
-    } else {
-      const updatedLiked = likedPosts.filter((likedId: string) => likedId !== post.id);
-      localStorage.setItem('likedPosts', JSON.stringify(updatedLiked));
-      toast({
-        title: "Like removed",
-        description: "Article removed from your liked list.",
-      });
-    }
+    const { isLiked: newLikedState, likeCount: newLikeCount } = await toggleLike(post.id, userId);
+    setIsLiked(newLikedState);
+    setLikeCount(newLikeCount);
   };
 
   const handleShareTwitter = () => {
@@ -194,7 +202,7 @@ const BlogPost = () => {
               </div>
               
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={handleShare}>
+                <Button variant="outline" size="sm" onClick={handleShare} disabled={loading}>
                   <Share className="h-4 w-4 mr-1" />
                   Share
                 </Button>
@@ -202,6 +210,7 @@ const BlogPost = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={handleSave}
+                  disabled={loading}
                   className={isSaved ? "bg-primary text-primary-foreground" : ""}
                 >
                   <Bookmark className={`h-4 w-4 mr-1 ${isSaved ? "fill-current" : ""}`} />
@@ -211,10 +220,14 @@ const BlogPost = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={handleLike}
+                  disabled={loading}
                   className={isLiked ? "bg-red-500 text-white hover:bg-red-600" : ""}
                 >
                   <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
-                  {isLiked ? "Liked" : "Like"}
+                  <span className="flex items-center gap-1">
+                    {isLiked ? "Liked" : "Like"}
+                    {likeCount > 0 && <span className="text-xs">({likeCount})</span>}
+                  </span>
                 </Button>
               </div>
             </div>

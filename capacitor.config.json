@@ -1,0 +1,10 @@
+{
+  "appId": "app.lovable.ad4047d23e964d279a3eb7ae808fcf28",
+  "appName": "blog-nexus-studio",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://ad4047d2-3e96-4d27-9a3e-b7ae808fcf28.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  }
+}
