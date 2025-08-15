@@ -8,6 +8,7 @@ import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { usePostInteractions } from "@/hooks/usePostInteractions";
+import SEOHead from "@/components/SEOHead";
 
 const BlogPost = () => {
   const { id } = useParams();
@@ -149,7 +150,19 @@ const BlogPost = () => {
   };
 
   return (
-    <article className="min-h-screen">
+    <>
+      <SEOHead
+        title={`${post.title} - ModernBlog`}
+        description={post.excerpt || `Read ${post.title} on ModernBlog`}
+        image={post.image || "https://modernblog.com/og-image.jpg"}
+        url={`${window.location.origin}/article/${post.id}`}
+        type="article"
+        publishedTime={post.publish_date}
+        author={post.author_name}
+        tags={post.tags}
+        category={post.category}
+      />
+      <article className="min-h-screen">
       {/* Header */}
       <div className="bg-muted/30 py-8">
         <div className="container">
@@ -354,7 +367,8 @@ const BlogPost = () => {
           </div>
         </section>
       )}
-    </article>
+      </article>
+    </>
   );
 };
 
