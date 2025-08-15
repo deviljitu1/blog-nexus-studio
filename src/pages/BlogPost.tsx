@@ -25,29 +25,7 @@ const BlogPost = () => {
   // Mock user ID for demo - in real app, get from auth
   const userId = "demo-user-123";
   
-  if (!post) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
-          <p className="text-muted-foreground mb-6">
-            The article you're looking for doesn't exist or has been moved.
-          </p>
-          <Link to="/articles">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Articles
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
-  // Get related posts (same category, excluding current post)
-  const relatedPosts = publishedPosts
-    .filter(p => p.category === post.category && p.id !== post.id)
-    .slice(0, 3);
 
   // Load interaction states on component mount
   useEffect(() => {
@@ -74,6 +52,29 @@ const BlogPost = () => {
       loadInteractionStates();
     }
   }, [post?.id, userId]);
+
+  if (!post) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            The article you're looking for doesn't exist or has been moved.
+          </p>
+          <Link to="/articles">
+            <Button>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Articles
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const relatedPosts = publishedPosts
+    .filter(p => p.category === post.category && p.id !== post.id)
+    .slice(0, 3);
 
   const handleShare = async () => {
     const url = window.location.href;
