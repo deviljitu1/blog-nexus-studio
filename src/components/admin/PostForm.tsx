@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,8 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { X, Plus, CheckCircle, AlertTriangle, Wand2, Eye } from 'lucide-react';
 import type { BlogPost } from '@/hooks/useBlogPosts';
+import { generateSEOMetadata, generateSocialContent, validateSEO } from '@/utils/seoUtils';
 
 interface PostFormProps {
   post?: BlogPost;
@@ -30,6 +32,43 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
   });
 
   const [newTag, setNewTag] = useState('');
+  const [seoMetadata, setSeoMetadata] = useState<any>(null);
+  const [seoValidation, setSeoValidation] = useState<any>(null);
+  const [showSEOPreview, setShowSEOPreview] = useState(false);
+
+  // Auto-generate SEO metadata when form data changes
+  useEffect(() => {
+    if (formData.title) {
+      const metadata = generateSEOMetadata(formData);
+      const validation = validateSEO({
+        seoTitle: metadata.seoTitle,
+        metaDescription: metadata.metaDescription,
+        tags: formData.tags,
+        content: formData.content
+      });
+      
+      setSeoMetadata(metadata);
+      setSeoValidation(validation);
+    }
+  }, [formData.title, formData.excerpt, formData.content, formData.category, formData.tags]);
+
+  // Auto-update read time based on content
+  useEffect(() => {
+    if (formData.content && seoMetadata?.estimatedReadTime !== formData.read_time) {
+      setFormData(prev => ({
+        ...prev,
+        read_time: seoMetadata?.estimatedReadTime || 5
+      }));
+    }
+  }, [seoMetadata?.estimatedReadTime]);
+
+  const [socialContent, setSocialContent] = useState<any>(null);
+
+  useEffect(() => {
+    if (formData.title) {
+      setSocialContent(generateSocialContent(formData));
+    }
+  }, [formData.title, formData.excerpt, formData.category, formData.tags]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,11 +92,87 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
     }));
   };
 
+  const autoGenerateExcerpt = () => {
+    if (formData.content && !formData.excerpt) {
+      const cleanContent = formData.content.replace(/<[^>]*>/g, '').trim();
+      const excerpt = cleanContent.length > 160 
+        ? `${cleanContent.substring(0, 157)}...`
+        : cleanContent;
+      setFormData(prev => ({ ...prev, excerpt }));
+    }
+  };
+
   return (
-    <Card className="max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>{post ? 'Edit Post' : 'Create New Post'}</CardTitle>
-      </CardHeader>
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* SEO Status Card */}
+      {seoValidation && (
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className={`h-5 w-5 ${seoValidation.score >= 80 ? 'text-green-500' : seoValidation.score >= 60 ? 'text-yellow-500' : 'text-red-500'}`} />
+                SEO Score: {seoValidation.score}/100
+              </CardTitle>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSEOPreview(!showSEOPreview)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                {showSEOPreview ? 'Hide' : 'Show'} SEO Preview
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {seoValidation.issues.length > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Issues to fix:</strong>
+                  <ul className="list-disc list-inside mt-1">
+                    {seoValidation.issues.map((issue: string, index: number) => (
+                      <li key={index} className="text-sm">{issue}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {seoValidation.recommendations.length > 0 && (
+              <Alert>
+                <AlertDescription>
+                  <strong>Recommendations:</strong>
+                  <ul className="list-disc list-inside mt-1">
+                    {seoValidation.recommendations.map((rec: string, index: number) => (
+                      <li key={index} className="text-sm">{rec}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {showSEOPreview && seoMetadata && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">Search Engine Preview:</h4>
+                <div className="space-y-2">
+                  <div className="text-blue-600 text-lg font-medium">{seoMetadata.seoTitle}</div>
+                  <div className="text-green-600 text-sm">{seoMetadata.canonicalUrl}</div>
+                  <div className="text-gray-600 text-sm">{seoMetadata.metaDescription}</div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5" />
+            {post ? 'Edit Post' : 'Create SEO-Optimized Post'}
+          </CardTitle>
+        </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -74,14 +189,29 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
               </div>
 
               <div>
-                <Label htmlFor="excerpt">Excerpt</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="excerpt">SEO Description/Excerpt</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={autoGenerateExcerpt}
+                    className="text-xs"
+                  >
+                    <Wand2 className="h-3 w-3 mr-1" />
+                    Auto-generate
+                  </Button>
+                </div>
                 <Textarea
                   id="excerpt"
                   value={formData.excerpt}
                   onChange={(e) => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
-                  placeholder="Brief description of the post"
+                  placeholder="SEO-optimized description (120-160 characters recommended)"
                   rows={3}
                 />
+                <div className="text-xs text-muted-foreground mt-1">
+                  {formData.excerpt.length}/160 characters
+                </div>
               </div>
 
               <div>
@@ -175,6 +305,9 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
                     </Badge>
                   ))}
                 </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {formData.tags.length} tags • Recommended: 3-5 tags for optimal SEO
+                </div>
               </div>
             </div>
           </div>
@@ -185,23 +318,51 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
               id="content"
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="Write your post content here..."
+              placeholder="Write your SEO-optimized content here... (500+ words recommended for better search rankings)"
               rows={12}
               className="font-mono"
             />
+            <div className="text-xs text-muted-foreground mt-1">
+              {formData.content ? `${formData.content.split(/\s+/).length} words` : '0 words'} • 
+              Est. read time: {seoMetadata?.estimatedReadTime || 5} minutes
+            </div>
           </div>
+
+          {/* Social Media Preview */}
+          {socialContent && showSEOPreview && (
+            <Card className="bg-muted/30">
+              <CardHeader>
+                <CardTitle className="text-lg">Social Media Preview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Twitter/X Post:</Label>
+                  <div className="p-3 bg-background rounded border text-sm mt-1">
+                    {socialContent.twitterContent}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">LinkedIn Post:</Label>
+                  <div className="p-3 bg-background rounded border text-sm mt-1">
+                    {socialContent.linkedInContent}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex gap-4 justify-end">
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : post ? 'Update Post' : 'Create Post'}
+              {loading ? 'Saving...' : post ? 'Update Post' : 'Create SEO-Optimized Post'}
             </Button>
           </div>
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
