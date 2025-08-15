@@ -76,12 +76,6 @@ const Header = () => {
             )}
           </div>
 
-          {/* Admin Link */}
-          <Link to="/admin">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              Admin
-            </Button>
-          </Link>
 
           {/* Mobile Menu */}
           <Sheet>
@@ -111,11 +105,6 @@ const Header = () => {
                     placeholder="Search articles..."
                     className="mb-4"
                   />
-                  <Link to="/admin">
-                    <Button variant="outline" className="w-full">
-                      Admin Panel
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </SheetContent>

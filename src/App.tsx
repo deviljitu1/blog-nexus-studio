@@ -9,7 +9,7 @@ import Articles from "./pages/Articles";
 import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Admin from "./pages/Admin";
+import AdminProtected from "./pages/AdminProtected";
 import Category from "./pages/Category";
 import NotFound from "./pages/NotFound";
 
@@ -28,7 +28,7 @@ const App = () => (
             <Route path="article/:id" element={<BlogPost />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
-            <Route path="admin" element={<Admin />} />
+            <Route path="admin" element={<AdminProtected />} />
             <Route path="category/:category" element={<Category />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
