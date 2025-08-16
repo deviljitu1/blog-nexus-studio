@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Plus, CheckCircle, AlertTriangle, Wand2, Eye } from 'lucide-react';
 import type { BlogPost } from '@/hooks/useBlogPosts';
 import { generateSEOMetadata, generateSocialContent, validateSEO } from '@/utils/seoUtils';
+import { RichTextEditor } from './RichTextEditor';
 
 interface PostFormProps {
   post?: BlogPost;
@@ -314,16 +315,15 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
 
           <div>
             <Label htmlFor="content">Content</Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+            <RichTextEditor
+              content={formData.content || ''}
+              onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+              onTitleGenerate={(title) => setFormData(prev => ({ ...prev, title }))}
+              onExcerptGenerate={(excerpt) => setFormData(prev => ({ ...prev, excerpt }))}
               placeholder="Write your SEO-optimized content here... (500+ words recommended for better search rankings)"
-              rows={12}
-              className="font-mono"
             />
             <div className="text-xs text-muted-foreground mt-1">
-              {formData.content ? `${formData.content.split(/\s+/).length} words` : '0 words'} • 
+              {formData.content ? `${formData.content.replace(/<[^>]*>/g, '').split(/\s+/).length} words` : '0 words'} • 
               Est. read time: {seoMetadata?.estimatedReadTime || 5} minutes
             </div>
           </div>
