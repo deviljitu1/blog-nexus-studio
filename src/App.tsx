@@ -12,6 +12,7 @@ import Contact from "./pages/Contact";
 import AdminProtected from "./pages/AdminProtected";
 import Category from "./pages/Category";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
             <Route path="admin" element={<AdminProtected />} />
+            <Route path="auth" element={<Auth />} />
             <Route path="category/:category" element={<Category />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

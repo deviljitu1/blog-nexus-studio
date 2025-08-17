@@ -1,27 +1,29 @@
-import { useState, useEffect } from "react";
-import AdminAuth from "@/components/admin/AdminAuth";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Admin from "./Admin";
 
 const AdminProtected = () => {
+  const [checking, setChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
 
-  // Check if user is already authenticated from sessionStorage
   useEffect(() => {
-    const authStatus = sessionStorage.getItem("adminAuthenticated");
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
-    }
-  }, []);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setChecking(false);
+      if (!session) navigate("/auth", { replace: true });
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setChecking(false);
+      if (!session) navigate("/auth", { replace: true });
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
-  const handleAuthenticated = () => {
-    setIsAuthenticated(true);
-    sessionStorage.setItem("adminAuthenticated", "true");
-  };
-
-  if (!isAuthenticated) {
-    return <AdminAuth onAuthenticated={handleAuthenticated} />;
-  }
-
+  if (checking) return null;
+  if (!isAuthenticated) return null;
   return <Admin />;
 };
 

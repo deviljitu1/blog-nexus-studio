@@ -160,7 +160,7 @@ const Admin = () => {
                     <div className="flex items-start space-x-4 flex-1">
                       <img
                         src={post.image || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop'}
-                        alt={post.title}
+                        alt={post.title || 'Post thumbnail'}
                         className="w-16 h-16 rounded object-cover flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">

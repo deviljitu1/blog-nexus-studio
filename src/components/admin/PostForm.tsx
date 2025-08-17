@@ -153,9 +153,9 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
             {seoValidation.issues.length > 0 && (
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Issues to fix:</strong>
-                  <ul className="list-disc list-inside mt-1">
+                 <AlertDescription>
+                   <strong>Issues to fix:</strong>
+                   <ul className="list-disc list-inside mt-1" aria-label="SEO issues list">
                     {seoValidation.issues.map((issue: string, index: number) => (
                       <li key={index} className="text-sm">{issue}</li>
                     ))}
@@ -165,10 +165,10 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
             )}
             
             {seoValidation.recommendations.length > 0 && (
-              <Alert>
-                <AlertDescription>
-                  <strong>Recommendations:</strong>
-                  <ul className="list-disc list-inside mt-1">
+               <Alert>
+                 <AlertDescription>
+                   <strong>Recommendations:</strong>
+                   <ul className="list-disc list-inside mt-1" aria-label="SEO recommendations list">
                     {seoValidation.recommendations.map((rec: string, index: number) => (
                       <li key={index} className="text-sm">{rec}</li>
                     ))}
