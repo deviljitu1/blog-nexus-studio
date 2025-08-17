@@ -11,6 +11,7 @@ import { X, Plus, CheckCircle, AlertTriangle, Wand2, Eye } from 'lucide-react';
 import type { BlogPost } from '@/hooks/useBlogPosts';
 import { generateSEOMetadata, generateSocialContent, validateSEO } from '@/utils/seoUtils';
 import { RichTextEditor } from './RichTextEditor';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PostFormProps {
   post?: BlogPost;
@@ -36,6 +37,8 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
   const [seoMetadata, setSeoMetadata] = useState<any>(null);
   const [seoValidation, setSeoValidation] = useState<any>(null);
   const [showSEOPreview, setShowSEOPreview] = useState(false);
+  const [featuredFile, setFeaturedFile] = useState<File | null>(null);
+  const [uploadingFeatured, setUploadingFeatured] = useState(false);
 
   // Auto-generate SEO metadata when form data changes
   useEffect(() => {
@@ -100,6 +103,27 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
         ? `${cleanContent.substring(0, 157)}...`
         : cleanContent;
       setFormData(prev => ({ ...prev, excerpt }));
+    }
+  };
+
+  const handleFeaturedUpload = async () => {
+    if (!featuredFile) return;
+    setUploadingFeatured(true);
+    try {
+      const fileName = `featured/${Date.now()}-${featuredFile.name}`;
+      const { data, error } = await supabase.storage
+        .from('blog-images')
+        .upload(fileName, featuredFile);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(data.path);
+      setFormData(prev => ({ ...prev, image: publicUrl }));
+      setFeaturedFile(null);
+    } catch (e) {
+      console.error('Featured image upload failed:', e);
+    } finally {
+      setUploadingFeatured(false);
     }
   };
 
@@ -224,6 +248,23 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
                   onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
                   placeholder="https://example.com/image.jpg"
                 />
+                <div className="my-3 text-xs text-muted-foreground text-center">or</div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="featured-file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setFeaturedFile(e.target.files?.[0] || null)}
+                  />
+                  <Button type="button" onClick={handleFeaturedUpload} disabled={uploadingFeatured || !featuredFile}>
+                    {uploadingFeatured ? 'Uploading...' : 'Upload & Set'}
+                  </Button>
+                </div>
+                {formData.image && (
+                  <div className="mt-3">
+                    <img src={formData.image} alt="Featured preview" className="h-32 w-full object-cover rounded" />
+                  </div>
+                )}
               </div>
 
               <div>

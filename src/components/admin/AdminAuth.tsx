@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdminAuthProps {
   onAuthenticated: () => void;
@@ -15,26 +16,39 @@ const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Check credentials
-    if (userId === "nahush" && password === "Jitu@2002") {
-      onAuthenticated();
+    try {
+      // Check credentials
+      if (userId === "nahush" && password === "Jitu@2002") {
+        // Create a Supabase session so RLS sees auth.uid()
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
+
+        onAuthenticated();
+        toast({
+          title: "Access granted",
+          description: "Welcome to the admin panel",
+        });
+      } else {
+        toast({
+          title: "Access denied",
+          description: "Invalid credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error("Admin login error:", err);
       toast({
-        title: "Access granted",
-        description: "Welcome to the admin panel",
-      });
-    } else {
-      toast({
-        title: "Access denied",
-        description: "Invalid credentials",
+        title: "Authentication error",
+        description: err instanceof Error ? err.message : "Failed to authenticate",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
