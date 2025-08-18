@@ -46,6 +46,10 @@ export const useBlogPosts = () => {
 
   const createPost = async (postData: Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Ensure user is authenticated before insert
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) throw new Error('Please log in to create posts.');
+
       const { data, error } = await supabase
         .from('blog_posts')
         .insert([postData])

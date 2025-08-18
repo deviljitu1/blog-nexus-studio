@@ -9,7 +9,7 @@ import { Link } from '@tiptap/extension-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,22 +60,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
+        heading: { levels: [1, 2, 3] },
+        // Ensure no built-in link to avoid duplicate
       }),
       TextStyle,
       Color,
-      Highlight.configure({
-        multicolor: true,
-      }),
-      Image.configure({
-        HTMLAttributes: {
-          class: 'rounded-lg max-w-full h-auto',
-        },
-      }),
+      Highlight.configure({ multicolor: true }),
+      Image.configure({ HTMLAttributes: { class: 'rounded-lg max-w-full h-auto' } }),
       Link.configure({
         openOnClick: false,
+        autolink: true,
         HTMLAttributes: {
           class: 'text-primary underline underline-offset-4 hover:text-primary/80',
         },
@@ -199,7 +193,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   if (!editor) {
-    return <div className="h-96 bg-muted animate-pulse rounded-md" />;
+    return <div className="h-96 bg-muted animate-pulse rounded-md" aria-busy="true" aria-label="Editor loading" />;
   }
 
   return (
@@ -351,6 +345,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Insert Image</DialogTitle>
+              <DialogDescription>Paste an image URL or upload a file to insert into the editor.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>

@@ -15,6 +15,7 @@ const Header = () => {
     { name: "Categories", href: "/articles" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
+    { name: "Login", href: "/auth" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -75,7 +76,9 @@ const Header = () => {
               </Button>
             )}
           </div>
-
+          <Link to="/admin">
+            <Button size="sm" variant="outline">Admin</Button>
+          </Link>
 
           {/* Mobile Menu */}
           <Sheet>
