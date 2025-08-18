@@ -86,9 +86,6 @@ const Header = () => {
               </Button>
             )}
           </div>
-<Link to="/admin">
-  <Button size="sm" variant="outline">Admin</Button>
-</Link>
 {session ? (
   <Button
     size="sm"

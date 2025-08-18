@@ -44,6 +44,13 @@ const Auth = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        
+        // Log user login
+        const { data: session } = await supabase.auth.getSession();
+        if (session.session) {
+          await supabase.rpc('handle_user_login', { _user_id: session.session.user.id });
+        }
+        
         if (!rememberMe) {
           const key = `sb-wtqloayzvoslgsgqjjin-auth-token`;
           try { localStorage.removeItem(key); } catch {}
