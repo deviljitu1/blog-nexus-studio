@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-
+import { Checkbox } from "@/components/ui/checkbox";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -43,6 +44,13 @@ const Auth = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!rememberMe) {
+          const key = `sb-wtqloayzvoslgsgqjjin-auth-token`;
+          try { localStorage.removeItem(key); } catch {}
+          window.addEventListener('beforeunload', () => {
+            try { localStorage.removeItem(key); } catch {}
+          });
+        }
         toast({ title: "Welcome back", description: "Login successful." });
         navigate("/admin", { replace: true });
       }
@@ -74,6 +82,14 @@ const Auth = () => {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
+            {!isSignUp && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="remember" checked={rememberMe} onCheckedChange={(v) => setRememberMe(!!v)} />
+                  <Label htmlFor="remember">Remember me</Label>
+                </div>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Please wait..." : isSignUp ? "Sign up" : "Login"}
             </Button>

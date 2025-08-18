@@ -1,13 +1,24 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Menu, X, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, []);
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -15,9 +26,8 @@ const Header = () => {
     { name: "Categories", href: "/articles" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
-    { name: "Login", href: "/auth" },
+    ...(session ? [] : [{ name: "Login", href: "/auth" }]),
   ];
-
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -76,10 +86,25 @@ const Header = () => {
               </Button>
             )}
           </div>
-          <Link to="/admin">
-            <Button size="sm" variant="outline">Admin</Button>
-          </Link>
-
+<Link to="/admin">
+  <Button size="sm" variant="outline">Admin</Button>
+</Link>
+{session ? (
+  <Button
+    size="sm"
+    variant="outline"
+    onClick={async () => {
+      await supabase.auth.signOut();
+      navigate("/");
+    }}
+  >
+    Sign out
+  </Button>
+) : (
+  <Link to="/auth">
+    <Button size="sm" variant="outline">Login</Button>
+  </Link>
+)}
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>

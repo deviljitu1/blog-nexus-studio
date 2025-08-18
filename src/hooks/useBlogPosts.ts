@@ -50,9 +50,10 @@ export const useBlogPosts = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) throw new Error('Please log in to create posts.');
 
+      const payload = { ...(postData as any), publish_date: (postData as any).publish_date || new Date().toISOString() };
       const { data, error } = await supabase
         .from('blog_posts')
-        .insert([postData])
+        .insert([payload])
         .select()
         .single();
 
