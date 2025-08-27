@@ -26,7 +26,7 @@ const PostForm = ({ post, onSubmit, onCancel, loading }: PostFormProps) => {
     excerpt: post?.excerpt || '',
     content: post?.content || '',
     image: post?.image || '',
-    author_name: post?.author_name || 'Admin',
+    author_name: post?.author_name || 'Nahush Patel',
     category: post?.category || 'General',
     tags: post?.tags || [],
     status: post?.status || 'published',
