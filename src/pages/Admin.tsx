@@ -10,9 +10,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useAdminData } from "@/hooks/useAdminData";
 import PostForm from "@/components/admin/PostForm";
+import AdminGuide from "@/components/admin/AdminGuide";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -145,6 +147,18 @@ const Admin = () => {
           </div>
         </div>
 
+        {/* Welcome Message for New Admins */}
+        {users.length > 0 && stats.totalPosts === 0 && (
+          <Alert className="mb-8 border-primary bg-primary/5">
+            <Crown className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Welcome to your Admin Dashboard!</strong> You now have full administrative access. 
+              Start by creating your first blog post, managing user roles, or monitoring system activity.
+              The admin panel is only accessible via this URL: <code className="bg-muted px-1 rounded">/admin</code>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card>
@@ -215,11 +229,12 @@ const Admin = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="posts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="posts">Blog Posts</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="activity">Activity Logs</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="guide">Admin Guide</TabsTrigger>
           </TabsList>
 
           {/* Blog Posts Tab */}
@@ -456,6 +471,11 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Admin Guide Tab */}
+          <TabsContent value="guide" className="space-y-6">
+            <AdminGuide />
           </TabsContent>
         </Tabs>
 
