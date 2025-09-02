@@ -1,16 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Menu, X, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SearchDropdown } from "@/components/ui/SearchDropdown";
+import { useSearch } from "@/hooks/useSearch";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const { suggestions, hasResults } = useSearch(searchQuery);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -19,6 +25,38 @@ const Header = () => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    setShowSuggestions(query.length >= 2);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/articles?search=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setShowSuggestions(false);
+    }
+  };
+
+  const closeSearch = () => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    setShowSuggestions(false);
+  };
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -58,19 +96,38 @@ const Header = () => {
         {/* Search and Mobile Menu */}
         <div className="flex items-center space-x-4">
           {/* Search */}
-          <div className="relative">
+          <div className="relative" ref={searchRef}>
             {isSearchOpen ? (
               <div className="flex items-center space-x-2">
-                <Input
-                  type="search"
-                  placeholder="Search articles..."
-                  className="w-64"
-                  autoFocus
-                />
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <Input
+                    type="search"
+                    placeholder="Search articles..."
+                    className="w-64 pr-8"
+                    autoFocus
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                  />
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <Search className="h-3 w-3" />
+                  </Button>
+                  <SearchDropdown
+                    suggestions={suggestions}
+                    isOpen={showSuggestions && hasResults}
+                    query={searchQuery}
+                    onClose={() => setShowSuggestions(false)}
+                  />
+                </form>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsSearchOpen(false)}
+                  onClick={closeSearch}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -125,11 +182,15 @@ const Header = () => {
                   </Link>
                 ))}
                 <div className="pt-4 border-t">
-                  <Input
-                    type="search"
-                    placeholder="Search articles..."
-                    className="mb-4"
-                  />
+                  <form onSubmit={handleSearchSubmit}>
+                    <Input
+                      type="search"
+                      placeholder="Search articles..."
+                      className="mb-4"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                    />
+                  </form>
                 </div>
               </div>
             </SheetContent>

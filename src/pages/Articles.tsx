@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, Filter, Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +20,28 @@ const categories = [
 ];
 
 const Articles = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   const { publishedPosts, loading } = useBlogPosts();
+
+  // Update URL when search changes
+  useEffect(() => {
+    if (searchQuery) {
+      setSearchParams(prev => {
+        prev.set('search', searchQuery);
+        return prev;
+      });
+    } else {
+      setSearchParams(prev => {
+        prev.delete('search');
+        return prev;
+      });
+    }
+  }, [searchQuery, setSearchParams]);
 
   // Filter and sort posts
   const filteredPosts = publishedPosts
