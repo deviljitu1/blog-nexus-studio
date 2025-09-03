@@ -11,6 +11,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import AdminProtected from "./pages/AdminProtected";
 import Category from "./pages/Category";
+import Categories from "./pages/Categories";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="article/:id" element={<BlogPost />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="admin" element={<AdminProtected />} />
             <Route path="auth" element={<Auth />} />
             <Route path="category/:category" element={<Category />} />

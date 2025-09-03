@@ -61,10 +61,10 @@ const Header = () => {
   const navigation = [
     { name: "Home", href: "/" },
     { name: "Articles", href: "/articles" },
-    { name: "Categories", href: "/articles" },
+    { name: "Categories", href: "/categories" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
-    ...(session ? [] : [{ name: "Login", href: "/auth" }]),
+    ...(session ? [{ name: "Profile", href: "/profile" }] : [{ name: "Login", href: "/auth" }]),
   ];
   const isActive = (path: string) => location.pathname === path;
 
@@ -144,16 +144,21 @@ const Header = () => {
             )}
           </div>
 {session ? (
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={async () => {
-      await supabase.auth.signOut();
-      navigate("/");
-    }}
-  >
-    Sign out
-  </Button>
+  <div className="flex items-center space-x-2">
+    <Link to="/profile">
+      <Button size="sm" variant="ghost">Account</Button>
+    </Link>
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={async () => {
+        await supabase.auth.signOut();
+        navigate("/");
+      }}
+    >
+      Sign out
+    </Button>
+  </div>
 ) : (
   <Link to="/auth">
     <Button size="sm" variant="outline">Login</Button>
