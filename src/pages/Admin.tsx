@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, Search, Filter, Users, Activity, BarChart3, UserCheck, Crown, RefreshCw, ShoppingCart, Package, DollarSign } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Search, Filter, Users, Activity, BarChart3, UserCheck, Crown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useAdminData } from "@/hooks/useAdminData";
-import { useOrderData } from "@/hooks/useOrderData";
 import PostForm from "@/components/admin/PostForm";
 import AdminGuide from "@/components/admin/AdminGuide";
 import { Link } from "react-router-dom";
@@ -27,14 +26,9 @@ const Admin = () => {
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
-  const [showCategoryForm, setShowCategoryForm] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  const [orderStatusUpdate, setOrderStatusUpdate] = useState<{orderId: string, status: string} | null>(null);
   
   const { posts, loading: postsLoading, createPost, updatePost, deletePost } = useBlogPosts();
   const { users, activities, stats, loading: adminLoading, updateUserRole, refreshData } = useAdminData();
-  const { orders, categories, stats: orderStats, loading: orderLoading, updateOrderStatus, createCategory, updateCategory, deleteCategory, refreshData: refreshOrderData } = useOrderData();
 
   // Check if current user is admin
   useEffect(() => {
@@ -166,7 +160,7 @@ const Admin = () => {
         )}
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -209,39 +203,13 @@ const Admin = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                Total Orders
+                <UserCheck className="h-4 w-4" />
+                New Signups
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{orderStats.totalOrders}</div>
-              <div className="text-xs text-muted-foreground">all orders</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Pending Orders
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orderStats.pendingOrders}</div>
-              <div className="text-xs text-muted-foreground">need attention</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Total Revenue
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${orderStats.totalRevenue.toFixed(2)}</div>
-              <div className="text-xs text-muted-foreground">all time</div>
+              <div className="text-2xl font-bold">{stats.recentSignups}</div>
+              <div className="text-xs text-muted-foreground">last 7 days</div>
             </CardContent>
           </Card>
 
@@ -261,14 +229,12 @@ const Admin = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="posts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="posts">Blog Posts</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="activity">Activity Logs</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="guide">Guide</TabsTrigger>
+            <TabsTrigger value="guide">Admin Guide</TabsTrigger>
           </TabsList>
 
           {/* Blog Posts Tab */}
@@ -367,146 +333,6 @@ const Admin = () => {
                           </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Orders Tab */}
-          <TabsContent value="orders" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Management ({orders.length} orders)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {orderLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-muted-foreground">Loading orders...</p>
-                  </div>
-                ) : orders.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No orders found.</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-mono text-xs">
-                            {order.id.slice(0, 8)}...
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{order.customer_name}</div>
-                              <div className="text-sm text-muted-foreground">{order.customer_email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>${order.total_amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              order.status === 'completed' ? 'default' :
-                              order.status === 'pending' ? 'secondary' :
-                              order.status === 'cancelled' ? 'destructive' : 'outline'
-                            }>
-                              {order.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(order.created_at)}</TableCell>
-                          <TableCell>
-                            <Select
-                              value={order.status}
-                              onValueChange={(newStatus) => updateOrderStatus(order.id, newStatus)}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="processing">Processing</SelectItem>
-                                <SelectItem value="shipped">Shipped</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Categories Tab */}
-          <TabsContent value="categories" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Category Management ({categories.length} categories)</CardTitle>
-                <Button onClick={() => setShowCategoryForm(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Category
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {orderLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-2 text-muted-foreground">Loading categories...</p>
-                  </div>
-                ) : categories.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No categories found.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {categories.map((category) => (
-                      <Card key={category.id} className="relative">
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-semibold">{category.name}</h3>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {category.description || 'No description'}
-                              </p>
-                              <div className="mt-2">
-                                <Badge variant={category.is_active ? 'default' : 'secondary'}>
-                                  {category.is_active ? 'Active' : 'Inactive'}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditingCategory(category)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setCategoryToDelete(category.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
                     ))}
                   </div>
                 )}
@@ -744,93 +570,6 @@ const Admin = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeletePost}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Category Form Dialog */}
-        <Dialog open={showCategoryForm || !!editingCategory} onOpenChange={(open) => {
-          if (!open) {
-            setShowCategoryForm(false);
-            setEditingCategory(null);
-          }
-        }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingCategory ? 'Edit Category' : 'Create New Category'}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  placeholder="Category name"
-                  defaultValue={editingCategory?.name || ''}
-                  id="category-name"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Description</label>
-                <Input
-                  placeholder="Category description"
-                  defaultValue={editingCategory?.description || ''}
-                  id="category-description"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="category-active"
-                  defaultChecked={editingCategory?.is_active !== false}
-                />
-                <label htmlFor="category-active" className="text-sm">Active</label>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => {
-                  setShowCategoryForm(false);
-                  setEditingCategory(null);
-                }}>
-                  Cancel
-                </Button>
-                <Button onClick={async () => {
-                  const name = (document.getElementById('category-name') as HTMLInputElement)?.value;
-                  const description = (document.getElementById('category-description') as HTMLInputElement)?.value;
-                  const is_active = (document.getElementById('category-active') as HTMLInputElement)?.checked;
-                  
-                  if (!name) return;
-                  
-                  if (editingCategory) {
-                    await updateCategory(editingCategory.id, { name, description, is_active });
-                  } else {
-                    await createCategory({ name, description, is_active });
-                  }
-                  
-                  setShowCategoryForm(false);
-                  setEditingCategory(null);
-                }}>
-                  {editingCategory ? 'Update' : 'Create'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Category Delete Confirmation Dialog */}
-        <AlertDialog open={!!categoryToDelete} onOpenChange={() => setCategoryToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the category.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={async () => {
-                if (categoryToDelete) {
-                  await deleteCategory(categoryToDelete);
-                  setCategoryToDelete(null);
-                }
-              }}>Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
