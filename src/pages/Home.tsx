@@ -36,7 +36,7 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden min-h-[80vh] flex items-center">
         <div 
           className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary-glow/80"
           style={{
@@ -46,25 +46,25 @@ const Home = () => {
             backgroundBlendMode: 'overlay'
           }}
         />
-        <div className="relative container py-24 md:py-32">
-          <div className="max-w-3xl mx-auto text-center text-white">
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">
+        <div className="relative container py-16 md:py-24">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight animate-fade-in">
               Discover Stories That
-              <span className="block text-primary-glow">Inspire & Educate</span>
+              <span className="block text-primary-glow drop-shadow-glow animate-slide-up animate-delay-150">Inspire & Educate</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-white/90 leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl mb-8 text-white/90 leading-relaxed max-w-3xl mx-auto animate-fade-in animate-delay-300">
               Join our community of curious minds exploring technology, creativity, 
               and innovation through thoughtful articles and insights.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md sm:max-w-lg mx-auto animate-scale-in animate-delay-300">
               <Input
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/70"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-white/50 focus:ring-white/20"
               />
-              <Button size="lg" variant="secondary" className="shadow-glow">
+              <Button size="lg" variant="secondary" className="shadow-glow hover-lift whitespace-nowrap">
                 Get Started <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -73,16 +73,16 @@ const Home = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-12 md:py-16 bg-muted/30">
         <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
-                  <stat.icon className="h-6 w-6 text-primary" />
+              <div key={index} className="text-center group animate-fade-in hover-lift" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
+                  <stat.icon className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                 </div>
-                <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                <div className="text-muted-foreground">{stat.label}</div>
+                <div className="text-xl md:text-2xl font-bold mb-1">{stat.value}</div>
+                <div className="text-sm md:text-base text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -102,15 +102,17 @@ const Home = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {loading ? (
               <div className="col-span-full text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading featured articles...</p>
               </div>
             ) : (
-              featuredPosts.map((post) => (
-                <BlogCard key={post.id} post={post} variant="featured" />
+              featuredPosts.map((post, index) => (
+                <div key={post.id} className="animate-fade-in hover-lift" style={{ animationDelay: `${index * 150}ms` }}>
+                  <BlogCard post={post} variant="featured" />
+                </div>
               ))
             )}
           </div>
@@ -136,15 +138,17 @@ const Home = () => {
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {loading ? (
               <div className="col-span-full text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading latest articles...</p>
               </div>
             ) : (
-              recentPosts.map((post) => (
-                <BlogCard key={post.id} post={post} />
+              recentPosts.map((post, index) => (
+                <div key={post.id} className="animate-fade-in hover-lift" style={{ animationDelay: `${index * 100}ms` }}>
+                  <BlogCard post={post} />
+                </div>
               ))
             )}
           </div>
@@ -163,19 +167,20 @@ const Home = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((category) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+            {categories.map((category, index) => (
               <Link
                 key={category.name}
                 to={`/category/${category.name.toLowerCase()}`}
-                className="group"
+                className="group animate-fade-in"
+                style={{ animationDelay: `${index * 75}ms` }}
               >
-                <div className="text-center p-6 rounded-lg bg-card shadow-card hover:shadow-elegant transition-all duration-300 group-hover:-translate-y-1">
-                  <div className={`w-12 h-12 rounded-full ${category.color} mx-auto mb-4 group-hover:scale-110 transition-transform`} />
-                  <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                <div className="text-center p-4 md:p-6 rounded-lg bg-card shadow-card hover:shadow-elegant transition-all duration-300 group-hover:-translate-y-1 hover-lift">
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${category.color} mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-glow`} />
+                  <h3 className="font-semibold mb-1 md:mb-2 group-hover:text-primary transition-colors text-sm md:text-base">
                     {category.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     {category.count} articles
                   </p>
                 </div>

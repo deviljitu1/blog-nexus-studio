@@ -64,37 +64,39 @@ const Header = () => {
     { name: "Categories", href: "/categories" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
-    ...(session ? [{ name: "Profile", href: "/profile" }] : [{ name: "Login", href: "/auth" }]),
   ];
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-card">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <Edit3 className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-serif font-bold">ModernBlog</span>
+        <Link to="/" className="flex items-center space-x-2 group">
+          <Edit3 className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+          <span className="text-2xl font-serif font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">ModernBlog</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex items-center space-x-8">
           {navigation.map((item) => (
             <Link
               key={item.name}
               to={item.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
+              className={`relative text-sm font-medium transition-all duration-300 py-2 px-1 group ${
                 isActive(item.href)
                   ? "text-primary"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:text-primary"
               }`}
             >
               {item.name}
+              <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-primary transition-transform duration-300 ${
+                isActive(item.href) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+              } origin-left`} />
             </Link>
           ))}
         </nav>
 
-        {/* Search and Mobile Menu */}
-        <div className="flex items-center space-x-4">
+        {/* Search and Auth */}
+        <div className="flex items-center space-x-3">
           {/* Search */}
           <div className="relative" ref={searchRef}>
             {isSearchOpen ? (
@@ -103,7 +105,7 @@ const Header = () => {
                   <Input
                     type="search"
                     placeholder="Search articles..."
-                    className="w-64 pr-8"
+                    className="w-64 pr-10 bg-muted/50 border-border/50 focus:border-primary/50"
                     autoFocus
                     value={searchQuery}
                     onChange={handleSearchChange}
@@ -113,9 +115,9 @@ const Header = () => {
                     type="submit"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-primary/10"
                   >
-                    <Search className="h-3 w-3" />
+                    <Search className="h-4 w-4" />
                   </Button>
                   <SearchDropdown
                     suggestions={suggestions}
@@ -128,6 +130,7 @@ const Header = () => {
                   variant="ghost"
                   size="sm"
                   onClick={closeSearch}
+                  className="hover:bg-destructive/10 hover:text-destructive"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -137,65 +140,105 @@ const Header = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsSearchOpen(true)}
-                className="hidden sm:flex"
+                className="hidden sm:flex hover:bg-primary/10 hover:text-primary"
               >
                 <Search className="h-4 w-4" />
               </Button>
             )}
           </div>
-{session ? (
-  <div className="flex items-center space-x-2">
-    <Link to="/profile">
-      <Button size="sm" variant="ghost">Account</Button>
-    </Link>
-    <Button
-      size="sm"
-      variant="outline"
-      onClick={async () => {
-        await supabase.auth.signOut();
-        navigate("/");
-      }}
-    >
-      Sign out
-    </Button>
-  </div>
-) : (
-  <Link to="/auth">
-    <Button size="sm" variant="outline">Login</Button>
-  </Link>
-)}
+
+          {/* Auth Section */}
+          <div className="hidden md:flex items-center space-x-3">
+            {session ? (
+              <div className="flex items-center space-x-3">
+                <Link to="/profile">
+                  <Button size="sm" variant="ghost" className="hover:bg-primary/10 hover:text-primary">
+                    Account
+                  </Button>
+                </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate("/");
+                  }}
+                  className="hover:bg-destructive hover:text-destructive-foreground border-border/50"
+                >
+                  Sign out
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button size="sm" variant="default" className="shadow-glow">
+                  Login
+                </Button>
+              </Link>
+            )}
+          </div>
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="md:hidden">
+              <Button variant="ghost" size="sm" className="md:hidden hover:bg-primary/10">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
-              <div className="flex flex-col space-y-4 mt-8">
+            <SheetContent side="right" className="w-80 bg-background/95 backdrop-blur">
+              <div className="flex flex-col space-y-6 mt-8">
+                <div className="text-center pb-4 border-b border-border/50">
+                  <h3 className="font-serif font-bold text-lg">Navigation</h3>
+                </div>
+                
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`text-lg font-medium transition-colors hover:text-primary ${
+                    className={`text-lg font-medium transition-all duration-300 py-3 px-4 rounded-lg ${
                       isActive(item.href)
-                        ? "text-primary"
-                        : "text-muted-foreground"
+                        ? "text-primary bg-primary/10 shadow-card"
+                        : "text-muted-foreground hover:text-primary hover:bg-muted/50"
                     }`}
                   >
                     {item.name}
                   </Link>
                 ))}
-                <div className="pt-4 border-t">
+                
+                <div className="pt-4 border-t border-border/50 space-y-4">
                   <form onSubmit={handleSearchSubmit}>
                     <Input
                       type="search"
                       placeholder="Search articles..."
-                      className="mb-4"
+                      className="bg-muted/50 border-border/50"
                       value={searchQuery}
                       onChange={handleSearchChange}
                     />
                   </form>
+                  
+                  {session ? (
+                    <div className="space-y-3">
+                      <Link to="/profile" className="block">
+                        <Button className="w-full" variant="outline">
+                          Account Settings
+                        </Button>
+                      </Link>
+                      <Button
+                        className="w-full"
+                        variant="destructive"
+                        onClick={async () => {
+                          await supabase.auth.signOut();
+                          navigate("/");
+                        }}
+                      >
+                        Sign Out
+                      </Button>
+                    </div>
+                  ) : (
+                    <Link to="/auth" className="block">
+                      <Button className="w-full shadow-glow">
+                        Login
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
             </SheetContent>
