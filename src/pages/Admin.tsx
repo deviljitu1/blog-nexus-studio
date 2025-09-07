@@ -15,6 +15,8 @@ import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { useAdminData } from "@/hooks/useAdminData";
 import PostForm from "@/components/admin/PostForm";
 import AdminGuide from "@/components/admin/AdminGuide";
+import UserManagementDialog from "@/components/admin/UserManagementDialog";
+import CreateAdminDialog from "@/components/admin/CreateAdminDialog";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,6 +27,7 @@ const Admin = () => {
   const [editingPost, setEditingPost] = useState<any>(null);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   
   const { posts, loading: postsLoading, createPost, updatePost, deletePost } = useBlogPosts();
@@ -139,6 +142,10 @@ const Admin = () => {
             <Button onClick={refreshData} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
+            </Button>
+            <Button onClick={() => setShowCreateAdmin(true)} variant="outline" size="sm">
+              <Crown className="h-4 w-4 mr-2" />
+              Create Admin
             </Button>
             <Button onClick={() => setShowPostForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -534,6 +541,20 @@ const Admin = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* User Management Dialog */}
+        <UserManagementDialog
+          user={selectedUser}
+          onOpenChange={() => setSelectedUser(null)}
+          onRoleChange={handleRoleChange}
+        />
+
+        {/* Create Admin Dialog */}
+        <CreateAdminDialog
+          open={showCreateAdmin}
+          onOpenChange={setShowCreateAdmin}
+          onAdminCreated={refreshData}
+        />
 
         {/* Create/Edit Post Dialog */}
         <Dialog open={showPostForm || !!editingPost} onOpenChange={(open) => {

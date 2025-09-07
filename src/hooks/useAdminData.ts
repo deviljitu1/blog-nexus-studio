@@ -75,25 +75,19 @@ export const useAdminData = () => {
     try {
       await checkAdminAccess();
 
-      // Fetch profiles with roles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `)
-        .order('created_at', { ascending: false });
+      // Use edge function to get user data with emails
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) throw new Error('Not authenticated');
 
-      if (profilesError) throw profilesError;
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
 
-      // For now, we'll use placeholder emails since we can't access auth.users directly
-      const usersWithEmail = profiles?.map(profile => ({
-        ...profile,
-        email: `user-${profile.user_id.slice(0, 8)}@example.com`, // Placeholder
-        role: ((profile as any).user_roles?.[0]?.role as string) || 'user'
-      }));
+      if (error) throw error;
 
-      setUsers(usersWithEmail || []);
+      setUsers(data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -179,13 +173,19 @@ export const useAdminData = () => {
     try {
       await checkAdminAccess();
 
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: userId,
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: {
+          action: 'update_role',
+          userId,
           role: newRole,
-          assigned_by: (await supabase.auth.getSession()).data.session?.user.id
-        });
+        },
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
 
       if (error) throw error;
 

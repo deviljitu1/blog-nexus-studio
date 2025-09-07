@@ -8,19 +8,50 @@ import { Card, CardContent } from "@/components/ui/card";
 const AdminProtected = () => {
   const [checking, setChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
+  const checkAdminRole = async (userId: string) => {
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    return roles?.some(r => r.role === 'admin') || false;
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+        const adminStatus = await checkAdminRole(session.user.id);
+        setIsAdmin(adminStatus);
+        if (!adminStatus) {
+          navigate("/", { replace: true });
+        }
+      } else {
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        navigate("/auth", { replace: true });
+      }
       setChecking(false);
-      if (!session) navigate("/auth", { replace: true });
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        setIsAuthenticated(true);
+        const adminStatus = await checkAdminRole(session.user.id);
+        setIsAdmin(adminStatus);
+        if (!adminStatus) {
+          navigate("/", { replace: true });
+        }
+      } else {
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        navigate("/auth", { replace: true });
+      }
       setChecking(false);
-      if (!session) navigate("/auth", { replace: true });
     });
+
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -40,15 +71,19 @@ const AdminProtected = () => {
     );
   }
   
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-              <p className="text-muted-foreground">Redirecting to login...</p>
+              <h2 className="text-xl font-semibold mb-2">
+                {!isAuthenticated ? "Authentication Required" : "Admin Access Required"}
+              </h2>
+              <p className="text-muted-foreground">
+                {!isAuthenticated ? "Redirecting to login..." : "You need admin privileges to access this area."}
+              </p>
             </div>
           </CardContent>
         </Card>

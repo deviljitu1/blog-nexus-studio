@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Save, LogOut } from "lucide-react";
+import { Camera, Save, LogOut, Crown, Shield, User, Settings } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 
 interface Profile {
@@ -22,6 +23,7 @@ interface Profile {
 const Profile = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [role, setRole] = useState<string>('user');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -72,6 +74,14 @@ const Profile = () => {
         setDisplayName(data.display_name || "");
         setBio(data.bio || "");
       }
+
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session?.user?.id);
+
+      setRole(roleData?.[0]?.role || 'user');
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({
@@ -175,6 +185,49 @@ const Profile = () => {
     navigate("/");
   };
 
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin': return <Crown className="h-4 w-4" />;
+      case 'moderator': return <Shield className="h-4 w-4" />;
+      default: return <User className="h-4 w-4" />;
+    }
+  };
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'admin': return <Badge variant="destructive" className="flex items-center gap-1"><Crown className="h-3 w-3" />Admin</Badge>;
+      case 'moderator': return <Badge variant="default" className="flex items-center gap-1"><Shield className="h-3 w-3" />Moderator</Badge>;
+      default: return <Badge variant="secondary" className="flex items-center gap-1"><User className="h-3 w-3" />User</Badge>;
+    }
+  };
+
+  const getPermissions = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return [
+          'Full admin dashboard access',
+          'User management and roles',
+          'Create, edit, delete all content',
+          'View analytics and activity logs',
+          'System configuration'
+        ];
+      case 'moderator':
+        return [
+          'Content moderation',
+          'Edit and delete posts',
+          'View user activity',
+          'Manage comments'
+        ];
+      default:
+        return [
+          'Create personal content',
+          'Edit own posts',
+          'View published content',
+          'Personal profile management'
+        ];
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-8">
@@ -186,7 +239,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 md:py-8 px-4">
+    <div className="container mx-auto py-6 md:py-8 px-4 space-y-6">
+      {/* Profile Settings Card */}
       <Card className="max-w-2xl mx-auto shadow-card">
         <CardHeader className="text-center md:text-left">
           <CardTitle className="text-2xl md:text-3xl font-serif">Profile Settings</CardTitle>
@@ -225,6 +279,9 @@ const Profile = () => {
                 <span>Uploading...</span>
               </div>
             )}
+            <div className="flex items-center gap-2">
+              {getRoleBadge(role)}
+            </div>
           </div>
 
           {/* Profile Form */}
@@ -285,6 +342,43 @@ const Profile = () => {
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Permissions Card */}
+      <Card className="max-w-2xl mx-auto shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {getRoleIcon(role)}
+            Account Permissions
+          </CardTitle>
+          <CardDescription>
+            Your current role and what you can do with it
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Your Permissions:</h4>
+              <div className="space-y-2">
+                {getPermissions(role).map((permission, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span className="text-sm">{permission}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {role === 'admin' && (
+              <div className="pt-4 border-t">
+                <Button onClick={() => navigate('/admin')} className="w-full">
+                  <Crown className="h-4 w-4 mr-2" />
+                  Access Admin Dashboard
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
