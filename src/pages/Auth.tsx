@@ -16,15 +16,31 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const checkUserRole = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+    
+    return data?.role === 'admin' ? '/admin' : '/';
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        navigate("/", { replace: true });
+        const redirectPath = await checkUserRole(session.user.id);
+        navigate(redirectPath, { replace: true });
       }
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/", { replace: true });
+    
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const redirectPath = await checkUserRole(session.user.id);
+        navigate(redirectPath, { replace: true });
+      }
     });
+    
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -45,21 +61,27 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         
-        // Log user login
+        // Log user login and check role for redirect
         const { data: session } = await supabase.auth.getSession();
         if (session.session) {
           await supabase.rpc('handle_user_login', { _user_id: session.session.user.id });
-        }
-        
-        if (!rememberMe) {
-          const key = `sb-wtqloayzvoslgsgqjjin-auth-token`;
-          try { localStorage.removeItem(key); } catch {}
-          window.addEventListener('beforeunload', () => {
+          
+          const redirectPath = await checkUserRole(session.session.user.id);
+          
+          if (!rememberMe) {
+            const key = `sb-wtqloayzvoslgsgqjjin-auth-token`;
             try { localStorage.removeItem(key); } catch {}
+            window.addEventListener('beforeunload', () => {
+              try { localStorage.removeItem(key); } catch {}
+            });
+          }
+          
+          toast({ 
+            title: "Welcome back", 
+            description: redirectPath === '/admin' ? "Welcome to admin panel" : "Login successful." 
           });
+          navigate(redirectPath, { replace: true });
         }
-        toast({ title: "Welcome back", description: "Login successful." });
-        navigate("/admin", { replace: true });
       }
     } catch (err) {
       console.error("Auth error:", err);
