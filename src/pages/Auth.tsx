@@ -48,11 +48,14 @@ const Auth = () => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
         }
       });
       
@@ -61,7 +64,7 @@ const Auth = () => {
       // The redirect will be handled by the onAuthStateChange listener
       toast({ 
         title: "Redirecting to Google", 
-        description: "Please complete the authentication with Google." 
+        description: "Please complete authentication in the new window." 
       });
     } catch (err) {
       console.error("Google auth error:", err);
