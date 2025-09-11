@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -129,13 +129,11 @@ export const useBlogPosts = () => {
     }
   };
 
-  const getPublishedPosts = () => {
-    return posts.filter(post => post.status === 'published');
-  };
+const publishedPosts = useMemo(() => posts.filter(post => post.status === 'published'), [posts]);
 
-  const getPostById = (id: string) => {
-    return posts.find(post => post.id === id);
-  };
+const getPostById = (id: string) => {
+  return posts.find(post => post.id === id);
+};
 
   useEffect(() => {
     fetchPosts();
@@ -143,7 +141,7 @@ export const useBlogPosts = () => {
 
   return {
     posts,
-    publishedPosts: getPublishedPosts(),
+    publishedPosts,
     loading,
     error,
     createPost,

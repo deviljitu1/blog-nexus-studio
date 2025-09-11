@@ -84,17 +84,65 @@ serve(async (req) => {
       )
     }
 
-    if (method === 'POST') {
-      const body = await req.json()
-      const { action, userId, role } = body
+if (method === 'POST') {
+      let body: any = null
+      try {
+        body = await req.json()
+      } catch (_err) {
+        body = null
+      }
+
+      const action = body?.action as string | undefined
+      const userId = body?.userId as string | undefined
+      const role = body?.role as string | undefined
+
+      // If no action is provided, treat this as a list users request (since supabase.functions.invoke uses POST)
+      if (!action) {
+        // Fetch all users with their profiles and roles
+        const { data: profiles, error: profilesError } = await supabaseClient
+          .from('profiles')
+          .select(`
+            *,
+            user_roles(role, assigned_at)
+          `)
+          .order('created_at', { ascending: false })
+
+        if (profilesError) throw profilesError
+
+        // Get auth users data using service role
+        const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers()
+        
+        if (authError) throw authError
+
+        // Combine profile data with auth data
+        const usersWithEmail = profiles?.map(profile => {
+          const authUser = authUsers.users.find(au => au.id === profile.user_id)
+          return {
+            ...profile,
+            email: authUser?.email || 'unknown@example.com',
+            email_confirmed: authUser?.email_confirmed_at ? true : false,
+            last_sign_in: authUser?.last_sign_in_at,
+            role: ((profile as any).user_roles?.[0]?.role as string) || 'user',
+            role_assigned_at: ((profile as any).user_roles?.[0]?.assigned_at as string) || null
+          }
+        })
+
+        return new Response(
+          JSON.stringify({ users: usersWithEmail }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        )
+      }
 
       if (action === 'update_role') {
         // Update user role
         const { error } = await supabaseClient
           .from('user_roles')
           .upsert({
-            user_id: userId,
-            role: role,
+            user_id: userId!,
+            role: role!,
             assigned_by: user.id
           })
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useBlogPosts, BlogPost } from './useBlogPosts';
 
 export interface SearchSuggestion {
@@ -11,22 +11,19 @@ export interface SearchSuggestion {
 
 export const useSearch = (query: string) => {
   const { publishedPosts, loading } = useBlogPosts();
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
 
-  const searchResults = useMemo(() => {
+  const suggestions = useMemo(() => {
     if (!query.trim() || query.length < 2) return [];
     
     const searchTerm = query.toLowerCase();
     
     return publishedPosts
-      .filter((post: BlogPost) => {
-        return (
-          post.title.toLowerCase().includes(searchTerm) ||
-          post.excerpt?.toLowerCase().includes(searchTerm) ||
-          post.category.toLowerCase().includes(searchTerm) ||
-          post.tags.some(tag => tag.toLowerCase().includes(searchTerm))
-        );
-      })
+      .filter((post: BlogPost) => (
+        post.title.toLowerCase().includes(searchTerm) ||
+        post.excerpt?.toLowerCase().includes(searchTerm) ||
+        post.category.toLowerCase().includes(searchTerm) ||
+        post.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+      ))
       .slice(0, 5)
       .map((post: BlogPost) => ({
         id: post.id,
@@ -36,10 +33,6 @@ export const useSearch = (query: string) => {
         type: 'post' as const,
       }));
   }, [query, publishedPosts]);
-
-  useEffect(() => {
-    setSuggestions(searchResults);
-  }, [searchResults]);
 
   return {
     suggestions,
