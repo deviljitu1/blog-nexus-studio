@@ -85,7 +85,8 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      const { action, userId, role } = await req.json()
+      const body = await req.json()
+      const { action, userId, role } = body
 
       if (action === 'update_role') {
         // Update user role
@@ -122,7 +123,7 @@ serve(async (req) => {
       }
 
       if (action === 'invite_admin') {
-        const { email, displayName } = await req.json()
+        const { email, displayName } = body
         
         // In a real implementation, you would send an invitation email
         // For now, we'll just log this action
