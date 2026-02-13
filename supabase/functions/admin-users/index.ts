@@ -46,32 +46,37 @@ serve(async (req) => {
     const { method } = req
 
     if (method === 'GET') {
-      // Fetch all users with their profiles and roles
+      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabaseClient
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role, assigned_at)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
       if (profilesError) throw profilesError
+
+      // Fetch all roles separately
+      const { data: roles, error: rolesError } = await supabaseClient
+        .from('user_roles')
+        .select('user_id, role, assigned_at')
+
+      if (rolesError) throw rolesError
 
       // Get auth users data using service role
       const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers()
       
       if (authError) throw authError
 
-      // Combine profile data with auth data
+      // Combine profile data with auth data and roles
       const usersWithEmail = profiles?.map(profile => {
         const authUser = authUsers.users.find(au => au.id === profile.user_id)
+        const userRole = roles?.find(r => r.user_id === profile.user_id)
         return {
           ...profile,
           email: authUser?.email || 'unknown@example.com',
           email_confirmed: authUser?.email_confirmed_at ? true : false,
           last_sign_in: authUser?.last_sign_in_at,
-          role: ((profile as any).user_roles?.[0]?.role as string) || 'user',
-          role_assigned_at: ((profile as any).user_roles?.[0]?.assigned_at as string) || null
+          role: userRole?.role || 'user',
+          role_assigned_at: userRole?.assigned_at || null
         }
       })
 
@@ -98,32 +103,37 @@ if (method === 'POST') {
 
       // If no action is provided, treat this as a list users request (since supabase.functions.invoke uses POST)
       if (!action) {
-        // Fetch all users with their profiles and roles
+        // Fetch all profiles
         const { data: profiles, error: profilesError } = await supabaseClient
           .from('profiles')
-          .select(`
-            *,
-            user_roles(role, assigned_at)
-          `)
+          .select('*')
           .order('created_at', { ascending: false })
 
         if (profilesError) throw profilesError
+
+        // Fetch all roles separately
+        const { data: roles, error: rolesError } = await supabaseClient
+          .from('user_roles')
+          .select('user_id, role, assigned_at')
+
+        if (rolesError) throw rolesError
 
         // Get auth users data using service role
         const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers()
         
         if (authError) throw authError
 
-        // Combine profile data with auth data
+        // Combine profile data with auth data and roles
         const usersWithEmail = profiles?.map(profile => {
           const authUser = authUsers.users.find(au => au.id === profile.user_id)
+          const userRole = roles?.find(r => r.user_id === profile.user_id)
           return {
             ...profile,
             email: authUser?.email || 'unknown@example.com',
             email_confirmed: authUser?.email_confirmed_at ? true : false,
             last_sign_in: authUser?.last_sign_in_at,
-            role: ((profile as any).user_roles?.[0]?.role as string) || 'user',
-            role_assigned_at: ((profile as any).user_roles?.[0]?.assigned_at as string) || null
+            role: userRole?.role || 'user',
+            role_assigned_at: userRole?.assigned_at || null
           }
         })
 
