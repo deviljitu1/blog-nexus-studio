@@ -20,7 +20,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -29,7 +29,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -38,7 +38,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -92,6 +92,75 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          id: string
+          order_items: Json
+          shipping_address: Json | null
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          id?: string
+          order_items?: Json
+          shipping_address?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          id?: string
+          order_items?: Json
+          shipping_address?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -203,6 +272,104 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          article_content: string | null
+          article_url: string | null
+          created_at: string
+          duration: number | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+          video_url: string | null
+          voice_type: string | null
+          voice_url: string | null
+        }
+        Insert: {
+          article_content?: string | null
+          article_url?: string | null
+          created_at?: string
+          duration?: number | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          video_url?: string | null
+          voice_type?: string | null
+          voice_url?: string | null
+        }
+        Update: {
+          article_content?: string | null
+          article_url?: string | null
+          created_at?: string
+          duration?: number | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          video_url?: string | null
+          voice_type?: string | null
+          voice_url?: string | null
+        }
+        Relationships: []
+      }
+      script_segments: {
+        Row: {
+          audio_end: number | null
+          audio_start: number | null
+          clip_duration: number | null
+          clip_thumbnail: string | null
+          clip_url: string | null
+          created_at: string
+          id: string
+          keywords: string | null
+          line_number: number
+          project_id: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          audio_end?: number | null
+          audio_start?: number | null
+          clip_duration?: number | null
+          clip_thumbnail?: string | null
+          clip_url?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string | null
+          line_number: number
+          project_id: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          audio_end?: number | null
+          audio_start?: number | null
+          clip_duration?: number | null
+          clip_thumbnail?: string | null
+          clip_url?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string | null
+          line_number?: number
+          project_id?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "script_segments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           assigned_at: string
@@ -251,10 +418,7 @@ export type Database = {
       }
     }
     Functions: {
-      handle_user_login: {
-        Args: { _user_id: string }
-        Returns: undefined
-      }
+      handle_user_login: { Args: { _user_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
